@@ -81,23 +81,23 @@ export default function Home(){
   const totalPages=data?Math.ceil(data.total/50):0;
   return (
     <main style={{display:"flex",minHeight:"100vh"}}>
-      <aside style={{width:280,padding:16,background:"#fff",borderRight:"1px solid #eee"}}>
+      <aside style={{width:280,flexShrink:0,padding:16,background:"#fff",borderRight:"1px solid #eee",overflow:"auto",boxSizing:"border-box"}}>
         <h3>篩選</h3>
         <label>縣市</label>
-        <select value={city} onChange={e=>{setCity(e.target.value);setTown("");setPage(1);}} style={{width:"100%",padding:6}}>
+        <select value={city} onChange={e=>{setCity(e.target.value);setTown("");setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}>
           <option value="">全部</option>{CITIES.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
         <label>鄉鎮市區</label>
-        <input value={town} onChange={e=>{setTown(e.target.value);setPage(1);}} style={{width:"100%",padding:6}} placeholder="如 文山區"/>
+        <input value={town} onChange={e=>{setTown(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}} placeholder="如 文山區"/>
         <label>交易類型</label>
         <div>{TYPES.map(t=><label key={t} style={{marginRight:8}}><input type="checkbox" checked={deal.includes(t)} onChange={()=>toggleDeal(t)}/>{t}</label>)}</div>
-        <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setPage(1);}} style={{width:"100%",padding:6}}/>
-        <label>交易日期(訖)</label><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setPage(1);}} style={{width:"100%",padding:6}}/>
+        <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
+        <label>交易日期(訖)</label><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
         <label>總價區間(萬元)</label>
-        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6}}/></div>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
         <label>單價區間(元/坪)</label>
-        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6}}/></div>
-        <label>地址關鍵字</label><input value={keyword} onChange={e=>{setKeyword(e.target.value);setPage(1);}} style={{width:"100%",padding:6}}/>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
+        <label>地址關鍵字</label><input value={keyword} onChange={e=>{setKeyword(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
       </aside>
       <section style={{flex:1,padding:16}}>
