@@ -1,0 +1,11 @@
+﻿編號,屋齡,建物移轉面積平方公尺,主要用途,主要建材,建築完成日期,總層數,建物分層,移轉情形
+The serial number,room age,building shifting area square meter,the main use,main building materials,construction completes the date,total layer,building lamination,
+RPQNMLOKNHLGFAX37CC,2,12.00,住家用,鋼筋混凝土造,113年6月14日,三層,,
+RPTNMLTKNHLGFAX18CC,2,18.00,住家用,鋼筋混凝土造,113年6月14日,三層,,
+RPTNMLOKNHLGFAX67CC,15,25.00,住家用,鋼筋混凝土造,100年6月1日,三層,,
+RPSNMLTKNHLGFAX08CC,2,12.00,住家用,鋼筋混凝土造,113年6月14日,三層,,
+RPSNMLOKNHLGFAX57CC,18,16.00,住家用,鋼筋混凝土造,97年4月14日,二層,,
+RPUNMLOKNHLGFAX77CC,2,12.00,住家用,鋼筋混凝土造,113年6月14日,三層,,
+RPPNMLOKNHLGFAX27CC,2,23.00,住家用,鋼筋混凝土造,113年6月14日,三層,,
+RPRNMLOKNHLGFAX47CC,18,20.00,住家用,鋼筋混凝土造,97年4月14日,二層,,
+RPPNMLTKNHLGFAX77CC,5,15.00,住家用,鋼筋混凝土造,110年3月2日,五層,,

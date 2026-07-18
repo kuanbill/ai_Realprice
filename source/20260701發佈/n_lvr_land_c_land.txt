@@ -1,0 +1,5 @@
+﻿編號,土地位置,土地移轉面積平方公尺,使用分區或編定,權利人持分分母,權利人持分分子,移轉情形,地號
+The serial number, land position,land shifting area square meter,the use zoning or compiles and checks,,,,land parcel
+RPPNMLMJOHLGFBN78CC,和東段,93.73,都市：住,,,,18980003
+RPQNMLMJOHLGFDN09CC,員林段,220.35,都市：住,,,,08640000
+RPPNMLKLNHLGFCN78CC,鹿鳴段,2680.00,非都市：特定農業區 ; 非都市編定：農牧用地,,,,10520000
