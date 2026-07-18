@@ -35,11 +35,6 @@ CREATE TABLE IF NOT EXISTS records (
   transfer_no TEXT,
   build_case_name TEXT,
   building_no TEXT,
-  construction_company TEXT,
-  base_area TEXT,
-  total_units TEXT,
-  public_ratio TEXT,
-  form_type TEXT,
   lat REAL,
   lng REAL
 );
@@ -49,6 +44,30 @@ CREATE INDEX IF NOT EXISTS idx_town ON records(town);
 CREATE INDEX IF NOT EXISTS idx_date ON records(transaction_date);
 CREATE INDEX IF NOT EXISTS idx_unit_price ON records(unit_price);
 CREATE INDEX IF NOT EXISTS idx_total_price ON records(total_price);
+
+CREATE TABLE IF NOT EXISTS details (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  serial_no TEXT,
+  record_type TEXT,
+  building_area REAL,
+  main_use TEXT,
+  main_materials TEXT,
+  build_complete_date TEXT,
+  total_floors TEXT,
+  building_floor TEXT,
+  land_position TEXT,
+  land_area REAL,
+  use_zoning_code TEXT,
+  right_holder_numerator REAL,
+  right_holder_denominator REAL,
+  parcel TEXT,
+  berth_category TEXT,
+  berth_price REAL,
+  berth_area REAL,
+  berth_floor TEXT,
+  transaction_situation TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_details_serial ON details(serial_no);
 `;
 
 export function getDb(): Database.Database {
