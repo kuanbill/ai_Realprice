@@ -98,9 +98,9 @@ export default function Home(){
         <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
         <label>交易日期(訖)</label><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
         <label>總價區間(萬元)</label>
-        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);}} placeholder="最小" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);}} placeholder="最大" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/></div>
         <label>單價區間(萬元/坪)</label>
-        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);}} placeholder="最小" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);}} placeholder="最大" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/></div>
         <label>地址關鍵字</label><input value={keyword} onChange={e=>{setKeyword(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
         <button onClick={()=>doSearch()} style={{padding:"6px 12px",fontWeight:700}}>搜尋</button>
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
