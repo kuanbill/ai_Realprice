@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS records (
   berth_price REAL,
   note TEXT,
   serial_no TEXT,
-  transfer_no TEXT UNIQUE,
+  transfer_no TEXT,
   build_case_name TEXT,
   building_no TEXT,
   construction_company TEXT,
