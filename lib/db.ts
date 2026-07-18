@@ -38,12 +38,15 @@ CREATE TABLE IF NOT EXISTS records (
   lat REAL,
   lng REAL
 );
-CREATE INDEX IF NOT EXISTS idx_city ON records(city);
-CREATE INDEX IF NOT EXISTS idx_deal_type ON records(deal_type);
-CREATE INDEX IF NOT EXISTS idx_town ON records(town);
+CREATE INDEX IF NOT EXISTS idx_city_date ON records(city, transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_deal_date ON records(deal_type, transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_town_date ON records(town, transaction_date DESC);
 CREATE INDEX IF NOT EXISTS idx_date ON records(transaction_date);
-CREATE INDEX IF NOT EXISTS idx_unit_price ON records(unit_price);
-CREATE INDEX IF NOT EXISTS idx_total_price ON records(total_price);
+CREATE INDEX IF NOT EXISTS idx_unit_date ON records(unit_price, transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_total_date ON records(total_price, transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_date_total ON records(transaction_date DESC, total_price);
+CREATE INDEX IF NOT EXISTS idx_date_unit ON records(transaction_date DESC, unit_price);
+CREATE INDEX IF NOT EXISTS idx_city_deal_date ON records(city, deal_type, transaction_date DESC);
 
 CREATE TABLE IF NOT EXISTS details (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -28,12 +28,17 @@ export function GET(req: NextRequest) {
   if (dealType) { where.push("deal_type = ?"); params.push(dealType); }
   if (dateFrom) { where.push("transaction_date >= ?"); params.push(dateFrom); }
   if (dateTo) { where.push("transaction_date <= ?"); params.push(dateTo); }
-  if (priceMin) { where.push("total_price >= ?"); params.push(Number(priceMin) * 10000); }
-  if (priceMax) { where.push("total_price <= ?"); params.push(Number(priceMax) * 10000); }
-  if (unitMin) { where.push("unit_price >= ?"); params.push(Number(unitMin) * SQM_TO_PING); }
-  if (unitMax) { where.push("unit_price <= ?"); params.push(Number(unitMax) * SQM_TO_PING); }
-  if (keyword) { where.push("address LIKE ?"); params.push(`%${keyword}%`); }
+  if (priceMin) { const v = Number(priceMin) * 10000; if (Number.isFinite(v)) { where.push("total_price >= ?"); params.push(v); } }
+  if (priceMax) { const v = Number(priceMax) * 10000; if (Number.isFinite(v)) { where.push("total_price <= ?"); params.push(v); } }
+  if (unitMin) { const v = Number(unitMin) * SQM_TO_PING; if (Number.isFinite(v)) { where.push("unit_price >= ?"); params.push(v); } }
+  if (unitMax) { const v = Number(unitMax) * SQM_TO_PING; if (Number.isFinite(v)) { where.push("unit_price <= ?"); params.push(v); } }
+  if (keyword) {
+    where.push("records.id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)");
+    params.push(`${keyword}*`);
+  }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+  const t0 = Date.now();
 
   const totalRow = db.prepare(`SELECT COUNT(*) AS c FROM records ${whereSql}`).get(...params) as { c: number };
   const total = totalRow.c;
@@ -46,13 +51,36 @@ export function GET(req: NextRequest) {
     LIMIT ? OFFSET ?
   `).all(...params, pageSize, (page - 1) * pageSize) as any[];
 
-  const statRows = db.prepare(`
-    SELECT unit_price, total_price FROM records ${whereSql}
-  `).all(...params) as { unit_price: number | null; total_price: number | null }[];
-  const units = statRows.map(r => r.unit_price).filter((v): v is number => v !== null).sort((a,b)=>a-b);
-  const prices = statRows.map(r => r.total_price).filter((v): v is number => v !== null);
-  const avg = (arr: number[]) => arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0;
-  const median = (arr: number[]) => arr.length ? (arr.length%2 ? arr[(arr.length-1)/2] : (arr[arr.length/2-1]+arr[arr.length/2])/2) : 0;
+  let statRow: any = { avg_unit:null, avg_price:null, min_price:null, max_price:null, unit_cnt:0 };
+  if (total <= 500000) {
+    statRow = db.prepare(`
+      SELECT
+        AVG(unit_price) AS avg_unit,
+        AVG(total_price) AS avg_price,
+        MIN(total_price) AS min_price,
+        MAX(total_price) AS max_price,
+        SUM(CASE WHEN unit_price IS NOT NULL THEN 1 ELSE 0 END) AS unit_cnt
+      FROM records ${whereSql}
+    `).get(...params);
+  } else {
+    statRow.unit_cnt = total;
+  }
+
+  let medianUnit = 0;
+  const unitCnt = total <= 500000 ? (statRow.unit_cnt || 0) : 0;
+  if (unitCnt > 0 && unitCnt <= 50000) {
+    const medianWhere = where.length ? `${whereSql} AND unit_price IS NOT NULL` : `WHERE unit_price IS NOT NULL`;
+    const paramsForMedian = where.length ? params : [];
+    const offset = Math.floor(unitCnt / 2) - 1;
+    const sample = db.prepare(`
+      SELECT unit_price FROM records ${medianWhere}
+      ORDER BY unit_price LIMIT ? OFFSET ?
+    `).all(...paramsForMedian, 2, offset) as { unit_price: number | null }[];
+    if (sample.length >= 2) medianUnit = ((sample[0]?.unit_price ?? 0) + (sample[1]?.unit_price ?? 0)) / 2;
+    else if (sample.length === 1) medianUnit = sample[0]?.unit_price ?? 0;
+  }
+
+  console.log(`[records] ${total} rows, ${Date.now()-t0}ms`);
 
   return NextResponse.json({
     total, page, page_size: pageSize,
@@ -63,11 +91,11 @@ export function GET(req: NextRequest) {
     })),
     stats: {
       count: total,
-      avg_unit: avg(units) / SQM_TO_PING,
-      median_unit: median(units) / SQM_TO_PING,
-      avg_price: avg(prices),
-      max_price: prices.length ? Math.max(...prices) : 0,
-      min_price: prices.length ? Math.min(...prices) : 0,
+      avg_unit: total <= 500000 ? (statRow.avg_unit ?? 0) / SQM_TO_PING : null,
+      median_unit: total <= 500000 ? medianUnit / SQM_TO_PING : null,
+      avg_price: total <= 500000 ? (statRow.avg_price ?? 0) : null,
+      max_price: total <= 500000 ? (statRow.max_price ?? 0) : null,
+      min_price: total <= 500000 ? (statRow.min_price ?? 0) : null,
     },
   });
 }

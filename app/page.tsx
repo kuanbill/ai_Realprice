@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
@@ -28,6 +28,23 @@ export default function Home(){
   const [data,setData]=useState<{rows:Row[];total:number;stats:Stats}|null>(null);
   const [summary,setSummary]=useState<{count:number;latest_date:string}|null>(null);
   const [tab,setTab]=useState<"list"|"map">("list");
+  const [activeQuery,setActiveQuery]=useState("");
+
+  function buildQ(p:number){
+    const q=new URLSearchParams();
+    if(city)q.set("city",city);
+    if(town)q.set("town",town);
+    if(deal.length)q.set("deal_type",deal.join(","));
+    if(dateFrom)q.set("date_from",dateFrom.replace(/-/g,""));
+    if(dateTo)q.set("date_to",dateTo.replace(/-/g,""));
+    if(priceMin)q.set("price_min",priceMin);
+    if(priceMax)q.set("price_max",priceMax);
+    if(unitMin)q.set("unit_min",unitMin);
+    if(unitMax)q.set("unit_max",unitMax);
+    if(keyword)q.set("keyword",keyword);
+    q.set("page",String(p));
+    return q.toString();
+  }
 
   function fmtDate(yyyymmdd:string){
     if(!yyyymmdd || yyyymmdd.length!==7) return yyyymmdd||"-";
@@ -36,39 +53,22 @@ export default function Home(){
     return `${y}/${m}/${d}`;
   }
 
-  const buildQuery = useCallback(()=>{
-    const p=new URLSearchParams();
-    if(city)p.set("city",city);
-    if(town)p.set("town",town);
-    if(deal.length)p.set("deal_type",deal.join(","));
-    if(dateFrom)p.set("date_from",dateFrom.replace(/-/g,""));
-    if(dateTo)p.set("date_to",dateTo.replace(/-/g,""));
-    if(priceMin)p.set("price_min",priceMin);
-    if(priceMax)p.set("price_max",priceMax);
-    if(unitMin)p.set("unit_min",unitMin);
-    if(unitMax)p.set("unit_max",unitMax);
-    if(keyword)p.set("keyword",keyword);
-    p.set("page",String(page));
-    return p.toString();
-  },[city,town,deal,dateFrom,dateTo,priceMin,priceMax,unitMin,unitMax,keyword,page]);
-
-  const hasFilter = !!(city||town||deal.length||dateFrom||dateTo||priceMin||priceMax||unitMin||unitMax||keyword);
-
   useEffect(()=>{
     let cancel=false;
     fetch("/api/summary").then(r=>r.json()).then(d=>{ if(!cancel)setSummary(d); });
     return ()=>{cancel=true;};
   },[]);
 
-  useEffect(()=>{
-    if(!hasFilter) { setData(null); return; }
-    let cancel=false;
-    fetch("/api/records?"+buildQuery()).then(r=>r.json()).then(d=>{ if(!cancel)setData(d); });
-    return ()=>{cancel=true;};
-  },[buildQuery,hasFilter]);
+  function doSearch(p?:number){
+    const np=p??1;
+    setPage(np);
+    const qs=buildQ(np);
+    setActiveQuery(qs);
+    fetch("/api/records?"+qs).then(r=>r.json()).then(d=>setData(d));
+  }
 
-  function toggleDeal(t:string){ setDeal(prev=> prev.includes(t)?prev.filter(x=>x!==t):[...prev,t]); setPage(1); }
-  function reset(){ setCity("");setTown("");setDeal([]);setDateFrom("");setDateTo("");setPriceMin("");setPriceMax("");setUnitMin("");setUnitMax("");setKeyword("");setPage(1); }
+  function toggleDeal(t:string){ setDeal(prev=> prev.includes(t)?prev.filter(x=>x!==t):[...prev,t]); }
+  function reset(){ setCity("");setTown("");setDeal([]);setDateFrom("");setDateTo("");setPriceMin("");setPriceMax("");setUnitMin("");setUnitMax("");setKeyword("");setPage(1);setData(null);setActiveQuery(""); }
 
   function exportCsv(){
     const header=["縣市","鄉鎮市區","類型","地址","交易日期","總價(元)","單價(元/坪)","坪數","建物型態","樓層"];
@@ -84,20 +84,21 @@ export default function Home(){
       <aside style={{width:280,flexShrink:0,padding:16,background:"#fff",borderRight:"1px solid #eee",overflow:"auto",boxSizing:"border-box"}}>
         <h3>篩選</h3>
         <label>縣市</label>
-        <select value={city} onChange={e=>{setCity(e.target.value);setTown("");setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}>
+        <select value={city} onChange={e=>{setCity(e.target.value);setTown("");}} style={{width:"100%",padding:6,boxSizing:"border-box"}}>
           <option value="">全部</option>{CITIES.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
         <label>鄉鎮市區</label>
-        <input value={town} onChange={e=>{setTown(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}} placeholder="如 文山區"/>
+        <input value={town} onChange={e=>{setTown(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}} placeholder="如 文山區"/>
         <label>交易類型</label>
         <div>{TYPES.map(t=><label key={t} style={{marginRight:8}}><input type="checkbox" checked={deal.includes(t)} onChange={()=>toggleDeal(t)}/>{t}</label>)}</div>
-        <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
-        <label>交易日期(訖)</label><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
+        <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
+        <label>交易日期(訖)</label><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
         <label>總價區間(萬元)</label>
-        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
         <label>單價區間(元/坪)</label>
-        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
-        <label>地址關鍵字</label><input value={keyword} onChange={e=>{setKeyword(e.target.value);setPage(1);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);}} placeholder="最小" style={{flex:1,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);}} placeholder="最大" style={{flex:1,padding:6,boxSizing:"border-box"}}/></div>
+        <label>地址關鍵字</label><input value={keyword} onChange={e=>{setKeyword(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
+        <button onClick={()=>doSearch()} style={{padding:"6px 12px",fontWeight:700}}>搜尋</button>
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
       </aside>
       <section style={{flex:1,padding:16}}>
@@ -105,7 +106,7 @@ export default function Home(){
           <button onClick={()=>setTab("list")} style={{padding:"6px 12px",fontWeight:tab==="list"?700:400}}>列表</button>
           <button onClick={()=>setTab("map")} style={{padding:"6px 12px",fontWeight:tab==="map"?700:400}}>地圖</button>
         </div>
-        {!data && (
+        {!data && !activeQuery && (
           <div style={{background:"#fff",padding:24,borderRadius:8}}>
             <h3 style={{marginTop:0}}>資料概覽</h3>
             <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
@@ -145,13 +146,13 @@ export default function Home(){
               </tbody>
             </table>
             <div style={{marginTop:12}}>
-              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={{padding:"6px 12px"}}>上一頁</button>
+              <button disabled={page<=1} onClick={()=>doSearch(page-1)} style={{padding:"6px 12px"}}>上一頁</button>
               <span style={{margin:"0 8px"}}>第 {page} / {totalPages} 頁（共 {data?.total??0} 筆）</span>
-              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={{padding:"6px 12px"}}>下一頁</button>
+              <button disabled={page>=totalPages} onClick={()=>doSearch(page+1)} style={{padding:"6px 12px"}}>下一頁</button>
             </div>
           </>
         )}
-        {data && tab==="map" && <MapView query={buildQuery()} />}
+        {data && tab==="map" && <MapView query={activeQuery} />}
       </section>
     </main>
   );
