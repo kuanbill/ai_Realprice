@@ -45,7 +45,7 @@ export function GET(req: NextRequest) {
 
   const rows = db.prepare(`
     SELECT id, city, town, deal_type, address, transaction_date, total_price, unit_price,
-           building_area, building_state, total_floors, rooms, halls, baths, note
+           building_area, building_state, total_floors, rooms, halls, baths, note, serial_no
     FROM records ${whereSql}
     ORDER BY transaction_date DESC
     LIMIT ? OFFSET ?

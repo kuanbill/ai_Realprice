@@ -6,7 +6,13 @@ const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 interface Row { id:number; city:string; town:string; deal_type:string; address:string;
   transaction_date:string; total_price:number; unit_price_ping:number|null;
-  area_ping:number|null; building_state:string; total_floors:string; note:string; }
+  area_ping:number|null; building_state:string; total_floors:string; note:string; serial_no:string; }
+interface Detail { id:number; serial_no:string; record_type:string; building_area:number|null;
+  main_use:string; main_materials:string; build_complete_date:string; total_floors:string;
+  building_floor:string; land_position:string; land_area:number|null; use_zoning_code:string;
+  right_holder_numerator:number|null; right_holder_denominator:number|null; parcel:string;
+  berth_category:string; berth_price:number|null; berth_area:number|null; berth_floor:string;
+  transaction_situation:string; }
 interface Stats { count:number; avg_unit:number; median_unit:number; avg_price:number; max_price:number; min_price:number; }
 
 const CITIES = ["台北市","新北市","桃園市","台中市","台南市","高雄市","新竹縣","新竹市","基隆市","嘉義縣","嘉義市","苗栗縣","南投縣","彰化縣","雲林縣","屏東縣","宜蘭縣","花蓮縣","台東縣","澎湖縣","金門縣"];
@@ -30,6 +36,7 @@ export default function Home(){
   const [summary,setSummary]=useState<{count:number;latest_date:string}|null>(null);
   const [tab,setTab]=useState<"list"|"map">("list");
   const [activeQuery,setActiveQuery]=useState("");
+  const [detail,setDetail]=useState<{row:Row;details:Detail[]}|null>(null);
 
   function buildQ(p:number){
     const q=new URLSearchParams();
@@ -69,7 +76,14 @@ export default function Home(){
   }
 
   function toggleDeal(t:string){ setDeal(prev=> prev.includes(t)?prev.filter(x=>x!==t):[...prev,t]); }
-  function reset(){ setCity("");setTown("");setDeal([]);setDateFrom("");setDateTo("");setPriceMin("");setPriceMax("");setUnitMin("");setUnitMax("");setKeyword("");setPage(1);setData(null);setActiveQuery(""); }
+  function reset(){ setCity("");setTown("");setDeal([]);setDateFrom("");setDateTo("");setPriceMin("");setPriceMax("");setUnitMin("");setUnitMax("");setKeyword("");setPage(1);setData(null);setActiveQuery("");setDetail(null); }
+
+  function showDetail(row:Row){
+    setDetail({row,details:[]});
+    fetch("/api/details?serial_no="+encodeURIComponent(row.serial_no)).then(r=>r.json()).then(d=>{
+      setDetail(prev=>prev&&prev.row.id===row.id?{row,details:d.rows}:prev);
+    });
+  }
 
   function exportCsv(){
     const header=["縣市","鄉鎮市區","類型","地址","交易日期","總價(萬元)","單價(萬元/坪)","坪數","建物型態","樓層"];
@@ -144,7 +158,9 @@ export default function Home(){
               <tbody>
                 {(data?.rows||[]).map(r=>(
                   <tr key={r.id} style={{borderBottom:"1px solid #eee"}}>
-                    <Td>{r.city}</Td><Td>{r.town}</Td><Td>{r.deal_type}</Td><Td>{r.address}</Td><Td>{r.transaction_date}</Td>
+                    <Td>{r.city}</Td><Td>{r.town}</Td><Td>{r.deal_type}</Td>
+                    <Td><span onClick={()=>showDetail(r)} style={{color:"#1a73e8",cursor:"pointer",textDecoration:"underline"}}>{r.address}</span></Td>
+                    <Td>{fmtDate(r.transaction_date)}</Td>
                     <Td>{fmt(r.total_price)}</Td><Td>{fmt(r.unit_price_ping)}</Td><Td>{fmt(r.area_ping,1)}</Td><Td>{r.building_state}</Td><Td>{r.total_floors}</Td>
                   </tr>
                 ))}
@@ -160,6 +176,52 @@ export default function Home(){
         )}
         {data && tab==="map" && <MapView query={activeQuery} />}
       </section>
+      {detail && (
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setDetail(null)}>
+          <div style={{background:"#fff",borderRadius:12,padding:24,maxWidth:600,width:"90%",maxHeight:"80vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{margin:0}}>交易詳情</h3>
+              <button onClick={()=>setDetail(null)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer"}}>&times;</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+              <Info label="地址" value={detail.row.address} span={2}/>
+              <Info label="縣市" value={detail.row.city}/>
+              <Info label="鄉鎮" value={detail.row.town}/>
+              <Info label="類型" value={detail.row.deal_type}/>
+              <Info label="日期" value={fmtDate(detail.row.transaction_date)}/>
+              <Info label="總價(萬元)" value={fmt(detail.row.total_price)}/>
+              <Info label="單價(萬元/坪)" value={fmt(detail.row.unit_price_ping,1)}/>
+              <Info label="坪數" value={fmt(detail.row.area_ping,1)}/>
+              <Info label="建物型態" value={detail.row.building_state}/>
+              <Info label="樓層" value={detail.row.total_floors}/>
+              <Info label="備註" value={detail.row.note} span={2}/>
+            </div>
+            {detail.details.length>0 && (
+              <>
+                <h4 style={{margin:"12px 0 8px"}}>建物/土地明細</h4>
+                {detail.details.map((d,i)=>(
+                  <div key={d.id} style={{border:"1px solid #eee",borderRadius:8,padding:12,marginBottom:8}}>
+                    <div style={{fontSize:12,color:"#888",marginBottom:8}}>#{i+1} {d.record_type}</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+                      <Info label="建物面積" value={d.building_area?fmt(d.building_area,2)+" 平方公尺":null}/>
+                      <Info label="土地面積" value={d.land_area?fmt(d.land_area,2)+" 平方公尺":null}/>
+                      <Info label="主要用途" value={d.main_use}/>
+                      <Info label="主要建材" value={d.main_materials}/>
+                      <Info label="完工日期" value={d.build_complete_date}/>
+                      <Info label="建物層數" value={d.total_floors}/>
+                      <Info label="建物層次" value={d.building_floor}/>
+                      <Info label="使用分區" value={d.use_zoning_code}/>
+                      <Info label="土地位置" value={d.land_position} span={2}/>
+                      <Info label="筆數" value={d.parcel}/>
+                      <Info label="交易情形" value={d.transaction_situation}/>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -171,3 +233,9 @@ function Stat({label,value}:{label:string;value:string}){
 }
 function Th({children}:{children:React.ReactNode}){ return <th style={{textAlign:"left",padding:"8px",fontSize:13}}>{children}</th>; }
 function Td({children}:{children:React.ReactNode}){ return <td style={{padding:"8px",fontSize:13}}>{children}</td>; }
+function Info({label,value,span=1}:{label:string;value:string|null|number;span?:number}){
+  return <div style={{gridColumn:`span ${span}`}}>
+    <div style={{fontSize:11,color:"#888"}}>{label}</div>
+    <div style={{fontSize:13,wordBreak:"break-all"}}>{value??"-"}</div>
+  </div>;
+}
