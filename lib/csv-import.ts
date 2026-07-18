@@ -34,17 +34,27 @@ function toNum(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// 遞迴掃描資料夾下所有符合實價登錄命名規則的 CSV（含各層子資料夾）
+function walkCsv(dir: string): string[] {
+  const out: string[] = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...walkCsv(p));
+    else if (e.name.toLowerCase().endsWith(".csv") && /^._lvr_land_.*\.csv$/i.test(e.name)) out.push(p);
+  }
+  return out;
+}
+
 export function importFromFolder(folderPath: string): ImportResult {
   if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
     return { files: 0, inserted: 0, skipped: 0, errors: 0, message: `路徑不存在或不是資料夾: ${folderPath}` };
   }
-  const files = fs.readdirSync(folderPath)
-    .filter((f) => f.toLowerCase().endsWith(".csv") && /^._lvr_land_.*\.csv$/i.test(f));
+  const files = walkCsv(folderPath);
 
   const db = getDb();
   const result: ImportResult = { files: files.length, inserted: 0, skipped: 0, errors: 0, message: "" };
   const insertStmt = db.prepare(`
-    INSERT OR IGNORE INTO records
+    INSERT INTO records
     (city, city_code, deal_type, record_type, town, transaction_sign, address, transaction_date,
      transaction_count, total_floors, building_state, main_use, build_complete_date, building_area,
      rooms, halls, baths, total_price, unit_price, berth_type, berth_area, berth_price, note,
@@ -59,9 +69,9 @@ export function importFromFolder(folderPath: string): ImportResult {
   `);
 
   for (const file of files) {
-    const meta = parseFileName(file);
+    const meta = parseFileName(path.basename(file));
     if (!meta) continue;
-    const full = path.join(folderPath, file);
+    const full = file;
     let raw = fs.readFileSync(full, "utf8");
     raw = raw.replace(/^\uFEFF/, "");
     const lines = raw.split(/\r?\n/);
@@ -81,9 +91,7 @@ export function importFromFolder(folderPath: string): ImportResult {
         try {
           const town = r["鄉鎮市區"] || "";
           const coord = getTownCoord(meta.city, town);
-          // 來源檔內的 移轉編號/編號 只是該檔內的序號(如 001)，並非全域唯一，
-          // 跨檔會大量碰撞。改以「檔名+列序」產生穩定且全域唯一的鍵，
-          // 既保證每筆都能寫入，重新匯入同一資料夾時也能正確去重。
+          // 不去重：每一筆都直接寫入。transfer_no 僅作追溯用（完整路徑+列序），可重複。
           const transferNo = `${file}#${ri}`;
           const info = insertStmt.run({
             city: meta.city,
@@ -121,8 +129,7 @@ export function importFromFolder(folderPath: string): ImportResult {
             lat: coord ? coord.lat : null,
             lng: coord ? coord.lng : null,
           });
-          if (info.changes > 0) result.inserted++;
-          else result.skipped++;
+          result.inserted++;
         } catch {
           result.errors++;
         }
