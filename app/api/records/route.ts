@@ -30,8 +30,8 @@ export function GET(req: NextRequest) {
   if (dateTo) { where.push("transaction_date <= ?"); params.push(dateTo); }
   if (priceMin) { const v = Number(priceMin) * 10000; if (Number.isFinite(v)) { where.push("total_price >= ?"); params.push(v); } }
   if (priceMax) { const v = Number(priceMax) * 10000; if (Number.isFinite(v)) { where.push("total_price <= ?"); params.push(v); } }
-  if (unitMin) { const v = Number(unitMin) * SQM_TO_PING; if (Number.isFinite(v)) { where.push("unit_price >= ?"); params.push(v); } }
-  if (unitMax) { const v = Number(unitMax) * SQM_TO_PING; if (Number.isFinite(v)) { where.push("unit_price <= ?"); params.push(v); } }
+  if (unitMin) { const v = Number(unitMin) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price >= ?"); params.push(v); } }
+  if (unitMax) { const v = Number(unitMax) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price <= ?"); params.push(v); } }
   if (keyword) {
     where.push("records.id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)");
     params.push(`${keyword}*`);
@@ -86,16 +86,17 @@ export function GET(req: NextRequest) {
     total, page, page_size: pageSize,
     rows: rows.map(r => ({
       ...r,
-      unit_price_ping: r.unit_price ? r.unit_price / SQM_TO_PING : null,
+      total_price: r.total_price ? r.total_price / 10000 : null,
+      unit_price_ping: r.unit_price ? r.unit_price / SQM_TO_PING / 10000 : null,
       area_ping: r.building_area ? r.building_area * SQM_TO_PING : null,
     })),
     stats: {
       count: total,
-      avg_unit: total <= 500000 ? (statRow.avg_unit ?? 0) / SQM_TO_PING : null,
-      median_unit: total <= 500000 ? medianUnit / SQM_TO_PING : null,
-      avg_price: total <= 500000 ? (statRow.avg_price ?? 0) : null,
-      max_price: total <= 500000 ? (statRow.max_price ?? 0) : null,
-      min_price: total <= 500000 ? (statRow.min_price ?? 0) : null,
+      avg_unit: total <= 500000 ? (statRow.avg_unit ?? 0) / SQM_TO_PING / 10000 : null,
+      median_unit: total <= 500000 ? medianUnit / SQM_TO_PING / 10000 : null,
+      avg_price: total <= 500000 ? (statRow.avg_price ?? 0) / 10000 : null,
+      max_price: total <= 500000 ? (statRow.max_price ?? 0) / 10000 : null,
+      min_price: total <= 500000 ? (statRow.min_price ?? 0) / 10000 : null,
     },
   });
 }
