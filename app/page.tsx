@@ -26,7 +26,15 @@ export default function Home(){
   const [keyword,setKeyword]=useState("");
   const [page,setPage]=useState(1);
   const [data,setData]=useState<{rows:Row[];total:number;stats:Stats}|null>(null);
+  const [summary,setSummary]=useState<{count:number;latest_date:string}|null>(null);
   const [tab,setTab]=useState<"list"|"map">("list");
+
+  function fmtDate(yyyymmdd:string){
+    if(!yyyymmdd || yyyymmdd.length!==7) return yyyymmdd||"-";
+    const y=parseInt(yyyymmdd.slice(0,3),10)+1911;
+    const m=yyyymmdd.slice(3,5); const d=yyyymmdd.slice(5,7);
+    return `${y}/${m}/${d}`;
+  }
 
   const buildQuery = useCallback(()=>{
     const p=new URLSearchParams();
@@ -44,11 +52,20 @@ export default function Home(){
     return p.toString();
   },[city,town,deal,dateFrom,dateTo,priceMin,priceMax,unitMin,unitMax,keyword,page]);
 
+  const hasFilter = !!(city||town||deal.length||dateFrom||dateTo||priceMin||priceMax||unitMin||unitMax||keyword);
+
   useEffect(()=>{
+    let cancel=false;
+    fetch("/api/summary").then(r=>r.json()).then(d=>{ if(!cancel)setSummary(d); });
+    return ()=>{cancel=true;};
+  },[]);
+
+  useEffect(()=>{
+    if(!hasFilter) { setData(null); return; }
     let cancel=false;
     fetch("/api/records?"+buildQuery()).then(r=>r.json()).then(d=>{ if(!cancel)setData(d); });
     return ()=>{cancel=true;};
-  },[buildQuery]);
+  },[buildQuery,hasFilter]);
 
   function toggleDeal(t:string){ setDeal(prev=> prev.includes(t)?prev.filter(x=>x!==t):[...prev,t]); setPage(1); }
   function reset(){ setCity("");setTown("");setDeal([]);setDateFrom("");setDateTo("");setPriceMin("");setPriceMax("");setUnitMin("");setUnitMax("");setKeyword("");setPage(1); }
@@ -77,9 +94,9 @@ export default function Home(){
         <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setPage(1);}} style={{width:"100%",padding:6}}/>
         <label>交易日期(訖)</label><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setPage(1);}} style={{width:"100%",padding:6}}/>
         <label>總價區間(萬元)</label>
-        <div style={{display:"flex",gap:4}}><input value={priceMin} onChange={e=>{setPriceMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6}}/><input value={priceMax} onChange={e=>{setPriceMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6}}/></div>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6}}/></div>
         <label>單價區間(元/坪)</label>
-        <div style={{display:"flex",gap:4}}><input value={unitMin} onChange={e=>{setUnitMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6}}/><input value={unitMax} onChange={e=>{setUnitMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6}}/></div>
+        <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);setPage(1);}} placeholder="最小" style={{flex:1,padding:6}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);setPage(1);}} placeholder="最大" style={{flex:1,padding:6}}/></div>
         <label>地址關鍵字</label><input value={keyword} onChange={e=>{setKeyword(e.target.value);setPage(1);}} style={{width:"100%",padding:6}}/>
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
       </aside>
@@ -88,6 +105,16 @@ export default function Home(){
           <button onClick={()=>setTab("list")} style={{padding:"6px 12px",fontWeight:tab==="list"?700:400}}>列表</button>
           <button onClick={()=>setTab("map")} style={{padding:"6px 12px",fontWeight:tab==="map"?700:400}}>地圖</button>
         </div>
+        {!data && (
+          <div style={{background:"#fff",padding:24,borderRadius:8}}>
+            <h3 style={{marginTop:0}}>資料概覽</h3>
+            <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
+              <Stat label="總筆數" value={summary?fmt(summary.count):"-"} />
+              <Stat label="最新交易日期" value={summary?fmtDate(summary.latest_date):"-"} />
+            </div>
+            <p style={{color:"#888"}}>請於左側設定篩選條件後查詢。啟動時未載入任何交易資料。</p>
+          </div>
+        )}
         {data && tab==="list" && (
           <>
             {data.stats && (
