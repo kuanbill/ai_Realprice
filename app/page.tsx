@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { CITY_TOWNS } from "@/lib/city-towns";
 const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 interface Row { id:number; city:string; town:string; deal_type:string; address:string;
@@ -88,7 +89,10 @@ export default function Home(){
           <option value="">全部</option>{CITIES.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
         <label>鄉鎮市區</label>
-        <input value={town} onChange={e=>{setTown(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}} placeholder="如 文山區"/>
+        <select value={town} onChange={e=>{setTown(e.target.value);}} disabled={!city} style={{width:"100%",padding:6,boxSizing:"border-box"}}>
+          <option value="">{city?"全部":"請先選縣市"}</option>
+          {(CITY_TOWNS[city]||[]).map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
         <label>交易類型</label>
         <div>{TYPES.map(t=><label key={t} style={{marginRight:8}}><input type="checkbox" checked={deal.includes(t)} onChange={()=>toggleDeal(t)}/>{t}</label>)}</div>
         <label>交易日期(起)</label><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);}} style={{width:"100%",padding:6,boxSizing:"border-box"}}/>
