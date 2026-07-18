@@ -65,8 +65,8 @@ export function importFromFolder(folderPath: string): ImportResult {
     let raw = fs.readFileSync(full, "utf8");
     raw = raw.replace(/^\uFEFF/, "");
     const lines = raw.split(/\r?\n/);
-    // 第1行=中文標題, 第2行=英文標題(跳過), 第3行起=資料
-    const dataCsv = lines.slice(2).join("\n");
+    // 第1行=中文標題(保留為 header), 第2行=英文標題(跳過), 第3行起=資料
+    const dataCsv = [lines[0], ...lines.slice(2)].join("\n");
     let rows: any[];
     try {
       const parsed = Papa.parse(dataCsv, { header: true, skipEmptyLines: true });
@@ -76,11 +76,15 @@ export function importFromFolder(folderPath: string): ImportResult {
       continue;
     }
     const run = db.transaction((rs: any[]) => {
-      for (const r of rs) {
+      for (let ri = 0; ri < rs.length; ri++) {
+        const r = rs[ri];
         try {
           const town = r["鄉鎮市區"] || "";
           const coord = getTownCoord(meta.city, town);
-          const transferNo = r["移轉編號"] || r["編號"] || "";
+          // 來源檔內的 移轉編號/編號 只是該檔內的序號(如 001)，並非全域唯一，
+          // 跨檔會大量碰撞。改以「檔名+列序」產生穩定且全域唯一的鍵，
+          // 既保證每筆都能寫入，重新匯入同一資料夾時也能正確去重。
+          const transferNo = `${file}#${ri}`;
           const info = insertStmt.run({
             city: meta.city,
             city_code: meta.cityCode,
