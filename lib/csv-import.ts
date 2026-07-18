@@ -8,7 +8,6 @@ import { getTownCoord } from "./town-coords";
 export interface ImportResult {
   files: number;
   inserted: number;
-  skipped: number;
   errors: number;
   message: string;
 }
@@ -47,12 +46,12 @@ function walkCsv(dir: string): string[] {
 
 export function importFromFolder(folderPath: string): ImportResult {
   if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
-    return { files: 0, inserted: 0, skipped: 0, errors: 0, message: `路徑不存在或不是資料夾: ${folderPath}` };
+    return { files: 0, inserted: 0, errors: 0, message: `路徑不存在或不是資料夾: ${folderPath}` };
   }
   const files = walkCsv(folderPath);
 
   const db = getDb();
-  const result: ImportResult = { files: files.length, inserted: 0, skipped: 0, errors: 0, message: "" };
+  const result: ImportResult = { files: files.length, inserted: 0, errors: 0, message: "" };
   const insertRecord = db.prepare(`
     INSERT INTO records
     (city, city_code, deal_type, record_type, town, transaction_sign, address, transaction_date,
@@ -163,6 +162,6 @@ export function importFromFolder(folderPath: string): ImportResult {
     try { run(rows); }
     catch { result.errors += rows.length; }
   }
-  result.message = `完成：處理 ${result.files} 個檔，新增 ${result.inserted} 筆，跳過(重複) ${result.skipped} 筆，錯誤 ${result.errors} 筆`;
+  result.message = `完成：處理 ${result.files} 個檔，新增 ${result.inserted} 筆，錯誤 ${result.errors} 筆`;
   return result;
 }

@@ -5,7 +5,7 @@ function getArg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
-const folder = getArg("path") || process.env.SOURCE_DEFAULT_PATH || "C:\\ai_Realprice\\source\\lvr_landcsv";
+const folder = getArg("path") || process.env.SOURCE_DEFAULT_PATH || "C:\\ai_Realprice\\source";
 console.log(`匯入來源: ${folder}`);
 const res = importFromFolder(folder);
 console.log(res.message);
