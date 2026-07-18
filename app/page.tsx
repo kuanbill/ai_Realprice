@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
+const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 interface Row { id:number; city:string; town:string; deal_type:string; address:string;
   transaction_date:string; total_price:number; unit_price_ping:number|null;
@@ -24,6 +26,7 @@ export default function Home(){
   const [keyword,setKeyword]=useState("");
   const [page,setPage]=useState(1);
   const [data,setData]=useState<{rows:Row[];total:number;stats:Stats}|null>(null);
+  const [tab,setTab]=useState<"list"|"map">("list");
 
   const buildQuery = useCallback(()=>{
     const p=new URLSearchParams();
@@ -81,38 +84,47 @@ export default function Home(){
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
       </aside>
       <section style={{flex:1,padding:16}}>
-        {data?.stats && (
-          <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
-            <Stat label="筆數" value={fmt(data.stats.count)} />
-            <Stat label="平均單價(元/坪)" value={fmt(data.stats.avg_unit)} />
-            <Stat label="中位單價(元/坪)" value={fmt(data.stats.median_unit)} />
-            <Stat label="平均總價(元)" value={fmt(data.stats.avg_price)} />
-            <Stat label="最高總價" value={fmt(data.stats.max_price)} />
-            <Stat label="最低總價" value={fmt(data.stats.min_price)} />
-          </div>
+        <div style={{marginBottom:12}}>
+          <button onClick={()=>setTab("list")} style={{padding:"6px 12px",fontWeight:tab==="list"?700:400}}>列表</button>
+          <button onClick={()=>setTab("map")} style={{padding:"6px 12px",fontWeight:tab==="map"?700:400}}>地圖</button>
+        </div>
+        {data && tab==="list" && (
+          <>
+            {data.stats && (
+              <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
+                <Stat label="筆數" value={fmt(data.stats.count)} />
+                <Stat label="平均單價(元/坪)" value={fmt(data.stats.avg_unit)} />
+                <Stat label="中位單價(元/坪)" value={fmt(data.stats.median_unit)} />
+                <Stat label="平均總價(元)" value={fmt(data.stats.avg_price)} />
+                <Stat label="最高總價" value={fmt(data.stats.max_price)} />
+                <Stat label="最低總價" value={fmt(data.stats.min_price)} />
+              </div>
+            )}
+            <div style={{marginBottom:8}}>
+              <button onClick={exportCsv} style={{padding:"6px 12px"}}>匯出CSV</button>
+              <a href="/admin/import" style={{marginLeft:12}}>匯入管理</a>
+            </div>
+            <table style={{width:"100%",borderCollapse:"collapse",background:"#fff"}}>
+              <thead><tr style={{background:"#f0f0f0"}}>
+                <Th>縣市</Th><Th>鄉鎮</Th><Th>類型</Th><Th>地址</Th><Th>日期</Th><Th>總價(元)</Th><Th>單價(元/坪)</Th><Th>坪數</Th><Th>型態</Th><Th>樓層</Th>
+              </tr></thead>
+              <tbody>
+                {(data?.rows||[]).map(r=>(
+                  <tr key={r.id} style={{borderBottom:"1px solid #eee"}}>
+                    <Td>{r.city}</Td><Td>{r.town}</Td><Td>{r.deal_type}</Td><Td>{r.address}</Td><Td>{r.transaction_date}</Td>
+                    <Td>{fmt(r.total_price)}</Td><Td>{fmt(r.unit_price_ping)}</Td><Td>{fmt(r.area_ping,1)}</Td><Td>{r.building_state}</Td><Td>{r.total_floors}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{marginTop:12}}>
+              <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={{padding:"6px 12px"}}>上一頁</button>
+              <span style={{margin:"0 8px"}}>第 {page} / {totalPages} 頁（共 {data?.total??0} 筆）</span>
+              <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={{padding:"6px 12px"}}>下一頁</button>
+            </div>
+          </>
         )}
-        <div style={{marginBottom:8}}>
-          <button onClick={exportCsv} style={{padding:"6px 12px"}}>匯出CSV</button>
-          <a href="/admin/import" style={{marginLeft:12}}>匯入管理</a>
-        </div>
-        <table style={{width:"100%",borderCollapse:"collapse",background:"#fff"}}>
-          <thead><tr style={{background:"#f0f0f0"}}>
-            <Th>縣市</Th><Th>鄉鎮</Th><Th>類型</Th><Th>地址</Th><Th>日期</Th><Th>總價(元)</Th><Th>單價(元/坪)</Th><Th>坪數</Th><Th>型態</Th><Th>樓層</Th>
-          </tr></thead>
-          <tbody>
-            {(data?.rows||[]).map(r=>(
-              <tr key={r.id} style={{borderBottom:"1px solid #eee"}}>
-                <Td>{r.city}</Td><Td>{r.town}</Td><Td>{r.deal_type}</Td><Td>{r.address}</Td><Td>{r.transaction_date}</Td>
-                <Td>{fmt(r.total_price)}</Td><Td>{fmt(r.unit_price_ping)}</Td><Td>{fmt(r.area_ping,1)}</Td><Td>{r.building_state}</Td><Td>{r.total_floors}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{marginTop:12}}>
-          <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={{padding:"6px 12px"}}>上一頁</button>
-          <span style={{margin:"0 8px"}}>第 {page} / {totalPages} 頁（共 {data?.total??0} 筆）</span>
-          <button disabled={page>=totalPages} onClick={()=>setPage(p=>p+1)} style={{padding:"6px 12px"}}>下一頁</button>
-        </div>
+        {data && tab==="map" && <MapView query={buildQuery()} />}
       </section>
     </main>
   );
