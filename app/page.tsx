@@ -188,12 +188,13 @@ export default function Home(){
               <Info label="縣市" value={detail.row.city}/>
               <Info label="鄉鎮" value={detail.row.town}/>
               <Info label="類型" value={detail.row.deal_type}/>
-              <Info label="日期" value={fmtDate(detail.row.transaction_date)}/>
+              <Info label="成交日期" value={fmtDate(detail.row.transaction_date)}/>
               <Info label="總價(萬元)" value={fmt(detail.row.total_price)}/>
               <Info label="單價(萬元/坪)" value={fmt(detail.row.unit_price_ping,1)}/>
               <Info label="坪數" value={fmt(detail.row.area_ping,1)}/>
               <Info label="建物型態" value={detail.row.building_state}/>
-              <Info label="樓層" value={detail.row.total_floors}/>
+              <Info label="總樓層數" value={detail.row.total_floors}/>
+              <Info label="成交樓層" value={detail.row.building_floor}/>
               <Info label="備註" value={detail.row.note} span={2}/>
             </div>
             {detail.details.length>0 && (
