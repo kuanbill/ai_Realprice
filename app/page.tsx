@@ -6,7 +6,7 @@ const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 interface Row { id:number; city:string; town:string; deal_type:string; address:string;
   transaction_date:string; total_price:number; unit_price_ping:number|null;
-  area_ping:number|null; building_state:string; total_floors:string; note:string; serial_no:string; }
+  area_ping:number|null; building_state:string; total_floors:string; building_floor:string|null; note:string; serial_no:string; }
 interface Detail { id:number; serial_no:string; record_type:string; building_area:number|null;
   main_use:string; main_materials:string; build_complete_date:string; total_floors:string;
   building_floor:string; land_position:string; land_area:number|null; use_zoning_code:string;
@@ -153,7 +153,7 @@ export default function Home(){
             <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto",background:"#fff",borderRadius:8}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead style={{position:"sticky",top:0,background:"#f0f0f0",zIndex:1}}><tr>
-                <Th>縣市</Th><Th>鄉鎮</Th><Th>類型</Th><Th>地址</Th><Th>日期</Th><Th>總價(萬元)</Th><Th>單價(萬元/坪)</Th><Th>坪數</Th><Th>型態</Th><Th>樓層</Th>
+                <Th>縣市</Th><Th>鄉鎮</Th><Th>類型</Th><Th>地址</Th><Th>成交日期</Th><Th>總價(萬元)</Th><Th>單價(萬元/坪)</Th><Th>坪數</Th><Th>型態</Th><Th>總樓層數</Th><Th>成交樓層</Th>
               </tr></thead>
               <tbody>
                 {(data?.rows||[]).map(r=>(
@@ -161,7 +161,7 @@ export default function Home(){
                     <Td>{r.city}</Td><Td>{r.town}</Td><Td>{r.deal_type}</Td>
                     <Td><span onClick={()=>showDetail(r)} style={{color:"#1a73e8",cursor:"pointer",textDecoration:"underline"}}>{r.address}</span></Td>
                     <Td>{fmtDate(r.transaction_date)}</Td>
-                    <Td>{fmt(r.total_price)}</Td><Td>{fmt(r.unit_price_ping)}</Td><Td>{fmt(r.area_ping,1)}</Td><Td>{r.building_state}</Td><Td>{r.total_floors}</Td>
+                    <Td>{fmt(r.total_price)}</Td><Td>{fmt(r.unit_price_ping)}</Td><Td>{fmt(r.area_ping,1)}</Td><Td>{r.building_state}</Td><Td>{r.total_floors}</Td><Td>{r.building_floor??"-"}</Td>
                   </tr>
                 ))}
               </tbody>
