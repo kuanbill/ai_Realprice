@@ -1,8 +1,0 @@
-﻿編號,車位類別,車位價格,車位面積平方公尺,車位所在樓層
-Serial number,berth category,berth price,berth area square meter,
-RPQNMLQLNHLGFAT17CB,一樓平面,1200000,13.86,一樓
-RPSNMLMJOHLGFAT86CB,一樓平面,1700000,22.17,一樓
-RPSNMLLJOHLGFAT76CB,坡道平面,1600000,22.17,地下一樓
-RPTNMLMJOHLGFAT96CB,一樓平面,1900000,33.84,一樓
-RPPNMLKLNHLGFAT09CB,坡道平面,1500000,28.70,地下一樓
-RPPNMLMJOHLGFAT56CB,一樓平面,1650000,22.17,一樓

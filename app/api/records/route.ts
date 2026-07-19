@@ -25,7 +25,11 @@ export function GET(req: NextRequest) {
   const params: any[] = [];
   if (city) { where.push("city = ?"); params.push(city); }
   if (town) { where.push("town = ?"); params.push(town); }
-  if (dealType) { where.push("deal_type = ?"); params.push(dealType); }
+  if (dealType) {
+    const types = dealType.split(",").filter(Boolean);
+    if (types.length === 1) { where.push("deal_type = ?"); params.push(types[0]); }
+    else if (types.length > 1) { where.push(`deal_type IN (${types.map(() => "?").join(",")})`); params.push(...types); }
+  }
   if (dateFrom) { where.push("transaction_date >= ?"); params.push(dateFrom); }
   if (dateTo) { where.push("transaction_date <= ?"); params.push(dateTo); }
   if (priceMin) { const v = Number(priceMin) * 10000; if (Number.isFinite(v)) { where.push("total_price >= ?"); params.push(v); } }

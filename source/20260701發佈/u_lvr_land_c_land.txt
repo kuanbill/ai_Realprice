@@ -1,5 +1,0 @@
-﻿編號,土地位置,土地移轉面積平方公尺,使用分區或編定,權利人持分分母,權利人持分分子,移轉情形,地號
-The serial number, land position,land shifting area square meter,the use zoning or compiles and checks,,,,land parcel
-RPQNMLLJOHLGFAU76CC,加灣段,4581.82,非都市：一般農業區 ; 非都市編定：農牧用地,,,,13850000
-RPQNMLLJOHLGFAU76CC,加灣段,2132.23,非都市：一般農業區 ; 非都市編定：農牧用地,,,,13930000
-RPPNMLNJOHLGFAU86CC,永安段,90.51,非都市：鄉村區 ; 非都市編定：乙種建築用地,,,,12740000

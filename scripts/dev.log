@@ -1,0 +1,13 @@
+
+> realprice-query@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ✓ Compiled /api/records in 202ms (57 modules)
+[records] 843705 rows, 103ms
+ GET /api/records?city=%E5%8F%B0%E5%8C%97%E5%B8%82&page=1 200 in 444ms
