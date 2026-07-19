@@ -86,9 +86,9 @@ export default function Home(){
   }
 
   function exportCsv(){
-    const header=["縣市","鄉鎮市區","類型","地址","交易日期","總價(萬元)","單價(萬元/坪)","坪數","建物型態","樓層"];
+    const header=["縣市","鄉鎮市區","類型","地址","成交日期","總價(萬元)","單價(萬元/坪)","坪數","建物型態","總樓層數","成交樓層"];
     const lines=[header.join(",")];
-    (data?.rows||[]).forEach(r=>lines.push([r.city,r.town,r.deal_type,r.address,r.transaction_date,r.total_price,r.unit_price_ping,r.area_ping,r.building_state,r.total_floors].map(v=>JSON.stringify(v??"")).join(",")));
+    (data?.rows||[]).forEach(r=>lines.push([r.city,r.town,r.deal_type,r.address,r.transaction_date,r.total_price,r.unit_price_ping,r.area_ping,r.building_state,r.total_floors,r.building_floor].map(v=>JSON.stringify(v??"")).join(",")));
     const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
     const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="realprice.csv"; a.click();
   }
