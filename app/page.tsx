@@ -37,6 +37,7 @@ export default function Home(){
   const [tab,setTab]=useState<"list"|"map">("list");
   const [activeQuery,setActiveQuery]=useState("");
   const [detail,setDetail]=useState<{row:Row;details:Detail[]}|null>(null);
+  const [loading,setLoading]=useState(false);
 
   function buildQ(p:number){
     const q=new URLSearchParams();
@@ -70,9 +71,10 @@ export default function Home(){
   function doSearch(p?:number){
     const np=p??1;
     setPage(np);
+    setLoading(true);
     const qs=buildQ(np);
     setActiveQuery(qs);
-    fetch("/api/records?"+qs).then(r=>r.json()).then(d=>setData(d));
+    fetch("/api/records?"+qs).then(r=>r.json()).then(d=>setData(d)).finally(()=>setLoading(false));
   }
 
   function toggleDeal(t:string){ setDeal(prev=> prev.includes(t)?prev.filter(x=>x!==t):[...prev,t]); }
@@ -116,7 +118,9 @@ export default function Home(){
         <div style={{display:"flex",gap:4}}><input type="number" min={0} value={priceMin} onChange={e=>{setPriceMin(e.target.value);}} placeholder="最小" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={priceMax} onChange={e=>{setPriceMax(e.target.value);}} placeholder="最大" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/></div>
         <label>單價區間(萬元/坪)</label>
         <div style={{display:"flex",gap:4}}><input type="number" min={0} value={unitMin} onChange={e=>{setUnitMin(e.target.value);}} placeholder="最小" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/><input type="number" min={0} value={unitMax} onChange={e=>{setUnitMax(e.target.value);}} placeholder="最大" style={{flex:1,maxWidth:100,padding:6,boxSizing:"border-box"}}/></div>
-        <button onClick={()=>doSearch()} style={{padding:"6px 12px",fontWeight:700}}>搜尋</button>
+        <button onClick={()=>doSearch()} disabled={loading} style={{padding:"6px 12px",fontWeight:700}}>
+          {loading?"搜尋中...":"搜尋"}
+        </button>
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
       </aside>
       <section style={{flex:1,padding:16}}>
@@ -134,7 +138,13 @@ export default function Home(){
             <p style={{color:"#888"}}>請於左側設定篩選條件後查詢。啟動時未載入任何交易資料。</p>
           </div>
         )}
-        {data && tab==="list" && (
+        {loading && tab==="list" && (
+          <div style={{textAlign:"center",padding:40,color:"#888",background:"#fff",borderRadius:8}}>
+            <div style={{fontSize:18,marginBottom:8}}>搜尋中...</div>
+            <div style={{fontSize:14}}>請稍候，資料量較大可能需要一些時間</div>
+          </div>
+        )}
+        {!loading && data && tab==="list" && (
           <>
             {data.stats && (
               <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
