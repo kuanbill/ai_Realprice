@@ -56,7 +56,7 @@ export default function Home(){
 
   function fmtDate(yyyymmdd:string){
     if(!yyyymmdd || yyyymmdd.length!==7) return yyyymmdd||"-";
-    const y=parseInt(yyyymmdd.slice(0,3),10)+1911;
+    const y=yyyymmdd.slice(0,3);
     const m=yyyymmdd.slice(3,5); const d=yyyymmdd.slice(5,7);
     return `${y}/${m}/${d}`;
   }
