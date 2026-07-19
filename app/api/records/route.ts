@@ -3,6 +3,14 @@ import { getDb } from "@/lib/db";
 
 const SQM_TO_PING = 0.3025;
 
+function toHalfWidth(s: string): string {
+  return s.replace(/[\uff01-\uff5e]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+}
+
+function toFullWidth(s: string): string {
+  return s.replace(/[!-~]/g, c => String.fromCharCode(c.charCodeAt(0) + 0xfee0));
+}
+
 export const dynamic = "force-dynamic";
 
 export function GET(req: NextRequest) {
@@ -37,8 +45,10 @@ export function GET(req: NextRequest) {
   if (unitMin) { const v = Number(unitMin) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price >= ?"); params.push(v); } }
   if (unitMax) { const v = Number(unitMax) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price <= ?"); params.push(v); } }
   if (keyword) {
-    where.push("address LIKE ?");
-    params.push(`%${keyword}%`);
+    const half = toHalfWidth(keyword);
+    const full = toFullWidth(keyword);
+    where.push("records.id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)");
+    params.push(`"${half}" OR "${full}"`);
   }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
