@@ -11,6 +11,14 @@ function toFullWidth(s: string): string {
   return s.replace(/[!-~]/g, c => String.fromCharCode(c.charCodeAt(0) + 0xfee0));
 }
 
+function westernToROC(d: string): string {
+  if (!d || d.length < 4) return d;
+  const clean = d.replace(/-/g, "");
+  const y = parseInt(clean.slice(0, 4), 10);
+  if (!Number.isFinite(y)) return clean;
+  return String(y - 1911) + clean.slice(4);
+}
+
 export const dynamic = "force-dynamic";
 
 export function GET(req: NextRequest) {
@@ -38,8 +46,8 @@ export function GET(req: NextRequest) {
     if (types.length === 1) { where.push("deal_type = ?"); params.push(types[0]); }
     else if (types.length > 1) { where.push(`deal_type IN (${types.map(() => "?").join(",")})`); params.push(...types); }
   }
-  if (dateFrom) { where.push("transaction_date >= ?"); params.push(dateFrom); }
-  if (dateTo) { where.push("transaction_date <= ?"); params.push(dateTo); }
+  if (dateFrom) { where.push("transaction_date >= ?"); params.push(westernToROC(dateFrom)); }
+  if (dateTo) { where.push("transaction_date <= ?"); params.push(westernToROC(dateTo)); }
   if (priceMin) { const v = Number(priceMin) * 10000; if (Number.isFinite(v)) { where.push("total_price >= ?"); params.push(v); } }
   if (priceMax) { const v = Number(priceMax) * 10000; if (Number.isFinite(v)) { where.push("total_price <= ?"); params.push(v); } }
   if (unitMin) { const v = Number(unitMin) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price >= ?"); params.push(v); } }
@@ -47,8 +55,17 @@ export function GET(req: NextRequest) {
   if (keyword) {
     const half = toHalfWidth(keyword);
     const full = toFullWidth(keyword);
-    where.push("records.id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)");
-    params.push(`"${half}" OR "${full}"`);
+    // Try FTS5 prefix search first (fast), fall back to LIKE if no results
+    const ftsCount = (db.prepare(
+      `SELECT COUNT(*) as c FROM records WHERE id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)`
+    ).get(`${half}* OR ${full}*`) as { c: number }).c;
+    if (ftsCount > 0) {
+      where.push("records.id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)");
+      params.push(`${half}* OR ${full}*`);
+    } else {
+      where.push("address LIKE ?");
+      params.push(`%${half}%`);
+    }
   }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
