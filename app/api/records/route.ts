@@ -37,8 +37,8 @@ export function GET(req: NextRequest) {
   if (unitMin) { const v = Number(unitMin) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price >= ?"); params.push(v); } }
   if (unitMax) { const v = Number(unitMax) * SQM_TO_PING * 10000; if (Number.isFinite(v)) { where.push("unit_price <= ?"); params.push(v); } }
   if (keyword) {
-    where.push("records.id IN (SELECT id FROM records_fts WHERE records_fts MATCH ?)");
-    params.push(`${keyword}*`);
+    where.push("address LIKE ?");
+    params.push(`%${keyword}%`);
   }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
