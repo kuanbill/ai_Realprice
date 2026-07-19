@@ -124,9 +124,12 @@ export default function Home(){
         <button onClick={reset} style={{marginTop:12,padding:"6px 12px"}}>重置</button>
       </aside>
       <section style={{flex:1,padding:16}}>
-        <div style={{marginBottom:12}}>
-          <button onClick={()=>setTab("list")} style={{padding:"6px 12px",fontWeight:tab==="list"?700:400}}>列表</button>
-          <button onClick={()=>setTab("map")} style={{padding:"6px 12px",fontWeight:tab==="map"?700:400}}>地圖</button>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div>
+            <button onClick={()=>setTab("list")} style={{padding:"6px 12px",fontWeight:tab==="list"?700:400}}>列表</button>
+            <button onClick={()=>setTab("map")} style={{padding:"6px 12px",fontWeight:tab==="map"?700:400}}>地圖</button>
+          </div>
+          <a href="/admin/import" style={{padding:"6px 12px",background:"#f5f5f5",borderRadius:4,textDecoration:"none",color:"#333"}}>匯入管理</a>
         </div>
         {!data && !activeQuery && (
           <div style={{background:"#fff",padding:24,borderRadius:8}}>
@@ -158,7 +161,6 @@ export default function Home(){
             )}
             <div style={{marginBottom:8}}>
               <button onClick={exportCsv} style={{padding:"6px 12px"}}>匯出CSV</button>
-              <a href="/admin/import" style={{marginLeft:12}}>匯入管理</a>
             </div>
             <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto",background:"#fff",borderRadius:8}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
